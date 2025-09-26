@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master', 
+                git branch: 'rayen', 
                     url: 'https://github.com/Dhiac7/OrderWorkshop.git',
                     credentialsId: 'github-token'
             }
