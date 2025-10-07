@@ -1,6 +1,7 @@
 pipeline {
     agent any
 
+    // Trigger pipeline on GitHub push
     triggers {
         githubPush()
     }
@@ -11,39 +12,54 @@ pipeline {
     }
 
     environment {
-        // This helps if branch info isn't automatically set
-        GIT_BRANCH_NAME = sh(script: "git rev-parse --abbrev-ref HEAD || echo unknown", returnStdout: true).trim()
+        // Will be set after checkout
+        GIT_BRANCH_NAME = ''
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Clone your GitHub repository to get branch info
-                git branch: 'dhia',
-                    url: 'https://github.com/Dhiac7/OrderWorkshop.git',
-                    credentialsId: 'gitlink'
-
                 script {
-                    echo "📦 Checked out branch: ${env.BRANCH_NAME ?: env.GIT_BRANCH_NAME}"
+                    echo "🔄 Checking out repository..."
+
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: '*/dhia']], // Target branch
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [[$class: 'CleanBeforeCheckout']],
+                        userRemoteConfigs: [[
+                            url: 'https://github.com/Dhiac7/OrderWorkshop.git',
+                            credentialsId: 'gitlink' // Make sure this exists in Jenkins
+                        ]]
+                    ])
+
+                    // Detect branch even in detached HEAD
+                    env.GIT_BRANCH_NAME = sh(
+                        script: "git symbolic-ref --short HEAD || echo dhia",
+                        returnStdout: true
+                    ).trim()
+
+                    echo "📦 Checked out branch: ${env.GIT_BRANCH_NAME}"
                 }
             }
         }
 
         stage('Build') {
             when {
-                expression {
-                    def branchName = env.BRANCH_NAME ?: env.GIT_BRANCH_NAME
-                    return branchName == 'dhia'
-                }
+                expression { env.GIT_BRANCH_NAME == 'dhia' }
             }
             steps {
-                echo "🚀 Building on branch: ${env.BRANCH_NAME ?: env.GIT_BRANCH_NAME}"
+                echo "🚀 Building on branch: ${env.GIT_BRANCH_NAME}"
+                // Add your actual build commands here
+                // e.g., sh './mvnw clean package'
             }
         }
 
         stage('Test') {
             steps {
-                echo "🧪 Running tests on branch: ${env.BRANCH_NAME ?: env.GIT_BRANCH_NAME}"
+                echo "🧪 Running tests on branch: ${env.GIT_BRANCH_NAME}"
+                // Add your test commands here
+                // e.g., sh './mvnw test'
             }
         }
     }
@@ -51,20 +67,26 @@ pipeline {
     post {
         success {
             mail to: 'meddhiac03@gmail.com',
-                 subject: "✅ Success: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 subject: "✅ SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                  body: """\
-The build was successful!
-Branch: ${env.BRANCH_NAME ?: env.GIT_BRANCH_NAME}
-Check it here: ${env.BUILD_URL}
+✅ The build was successful!
+
+Branch: ${env.GIT_BRANCH_NAME}
+Job: ${env.JOB_NAME}
+Build Number: ${env.BUILD_NUMBER}
+View build: ${env.BUILD_URL}
 """
         }
         failure {
             mail to: 'meddhiac03@gmail.com',
-                 subject: "❌ Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 subject: "❌ FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                  body: """\
-The build failed!
-Branch: ${env.BRANCH_NAME ?: env.GIT_BRANCH_NAME}
-Check it here: ${env.BUILD_URL}
+❌ The build failed.
+
+Branch: ${env.GIT_BRANCH_NAME}
+Job: ${env.JOB_NAME}
+Build Number: ${env.BUILD_NUMBER}
+View build: ${env.BUILD_URL}
 """
         }
     }
