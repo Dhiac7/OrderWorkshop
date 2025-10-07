@@ -1,0 +1,71 @@
+pipeline {
+    agent any
+
+    triggers {
+        githubPush()
+    }
+
+    options {
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    environment {
+        // This helps if branch info isn't automatically set
+        GIT_BRANCH_NAME = sh(script: "git rev-parse --abbrev-ref HEAD || echo unknown", returnStdout: true).trim()
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Clone your GitHub repository to get branch info
+                git branch: 'dhia',
+                    url: 'https://github.com/Dhiac7/OrderWorkshop.git',
+                    credentialsId: 'gitlink'
+
+                script {
+                    echo "📦 Checked out branch: ${env.BRANCH_NAME ?: env.GIT_BRANCH_NAME}"
+                }
+            }
+        }
+
+        stage('Build') {
+            when {
+                expression {
+                    def branchName = env.BRANCH_NAME ?: env.GIT_BRANCH_NAME
+                    return branchName == 'dhia'
+                }
+            }
+            steps {
+                echo "🚀 Building on branch: ${env.BRANCH_NAME ?: env.GIT_BRANCH_NAME}"
+            }
+        }
+
+        stage('Test') {
+            steps {
+                echo "🧪 Running tests on branch: ${env.BRANCH_NAME ?: env.GIT_BRANCH_NAME}"
+            }
+        }
+    }
+
+    post {
+        success {
+            mail to: 'meddhiac03@gmail.com',
+                 subject: "✅ Success: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: """\
+The build was successful!
+Branch: ${env.BRANCH_NAME ?: env.GIT_BRANCH_NAME}
+Check it here: ${env.BUILD_URL}
+"""
+        }
+        failure {
+            mail to: 'meddhiac03@gmail.com',
+                 subject: "❌ Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: """\
+The build failed!
+Branch: ${env.BRANCH_NAME ?: env.GIT_BRANCH_NAME}
+Check it here: ${env.BUILD_URL}
+"""
+        }
+    }
+}
