@@ -20,7 +20,7 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
-        //appel test other test
+        //appel 
         launch(args); // ✅ Appel à la méthode launch() de Application
     }
 }
