@@ -11,7 +11,7 @@ import static javafx.application.Application.launch;
 public class Main extends Application {
 
     public void start(Stage primaryStage) throws Exception {
-        DataBase.initTables();
+        //DataBase.initTables();
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/tn.esprit.views/user.fxml"));
         Scene scene = new Scene(loader.load(), 600, 400);
         primaryStage.setTitle("Gestion Utilisateurs");
