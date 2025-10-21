@@ -6,7 +6,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Stage 2: Run the packaged app using JDK 22
-FROM eclipse-temurin:22-jdk
+FROM 3.9.11-eclipse-temurin-11-alpine 
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
