@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: javafx-app
+  namespace: devops
+  labels:
+    app: javafx-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: javafx-app
+  template:
+    metadata:
+      labels:
+        app: javafx-app
+    spec:
+      containers:
+        - name: javafx-app
+          image: dhia/javafx-app:latest   # ton image Docker
+          ports:
+            - containerPort: 8080
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Djavafx.headless=true"
