@@ -1,21 +1,31 @@
 pipeline {
     agent any
-    
+
     tools {
         jdk 'jdk-22'
         maven 'maven_3.6.3'
     }
-    
+
     stages {
         stage('GIT') {
             steps {
                 git branch: 'rayen', changelog: false, poll: false, url: 'https://github.com/Dhiac7/OrderWorkshop.git'
             }
         }
-        
+
         stage('Maven_build') {
             steps {
                 sh "mvn clean compile -Dskiptest=true"
+            }
+        }
+
+        stage('MVN SONARQUBE') {
+            steps {
+                script {
+                    withSonarQubeEnv("sonarqube") {
+                    sh 'mvn sonar:sonar'
+                    }
+                }
             }
         }
     }
