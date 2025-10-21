@@ -1,5 +1,5 @@
 # Stage 1: Build the JavaFX app using Maven 3.8.7 and JDK 22
-FROM maven:3.8.7-eclipse-temurin-22 AS build
+FROM maven:3.9.6-openjdk-22 AS build
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
