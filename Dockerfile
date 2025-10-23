@@ -1,19 +1,25 @@
-# ===== Build stage =====
-FROM maven:3.9.9-eclipse-temurin-22 AS build
-WORKDIR /workspace
-COPY pom.xml .
-RUN mvn -q -e -B -DskipTests dependency:go-offline
-COPY src ./src
-RUN mvn -q -e -B -DskipTests package
+# Use JDK 22
+FROM eclipse-temurin:22-jdk
 
-# ===== Runtime stage =====
-FROM eclipse-temurin:22-jre
+# Install system libraries + tools needed for JavaFX and downloading SDK
+RUN apt-get update && apt-get install -y \
+    libxext6 libxrender1 libxtst6 libxi6 libgl1 libx11-xcb1 \
+    curl unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and extract JavaFX SDK
+WORKDIR /opt
+RUN curl -L -o javafx.zip https://download2.gluonhq.com/openjfx/22.0.1/openjfx-22.0.1_linux-x64_bin-sdk.zip \
+    && unzip javafx.zip \
+    && rm javafx.zip
+
+# Copy app
 WORKDIR /app
-# use a nonroot user
-RUN useradd -u 10001 -r -s /sbin/nologin appuser
-COPY --from=build /workspace/target/*-SNAPSHOT-shaded.jar /app/app.jar
-EXPOSE 8080
-USER appuser
-ENV JAVA_OPTS=""
-ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar /app/app.jar"]
+COPY target/Order-1.0-SNAPSHOT.jar app.jar
+
+# Run with JavaFX modules
+CMD ["java", \
+     "--module-path", "/opt/javafx-sdk-22.0.1/lib", \
+     "--add-modules", "javafx.controls,javafx.fxml", \
+     "-jar", "app.jar"]
 
