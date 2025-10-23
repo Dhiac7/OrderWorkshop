@@ -8,6 +8,8 @@ pipeline {
     environment {
     DOCKERHUB_CREDENTIALS = "docker-hub"
     DOCKER_IMAGE = "bohx/order_project"
+    KUBECONFIG = '/var/lib/jenkins/.kube/config'
+
     }
     
 
@@ -69,6 +71,16 @@ pipeline {
             steps {
                 sh 'docker compose down || true'
                 sh 'docker compose up -d --build'
+            }
+        }
+        
+         stage('Kubernetes') {
+            steps {
+                sh '''
+                    kubectl apply -f mysql-deployment.yaml
+                    kubectl apply -f app-deployment.yaml
+                    '''
+                
             }
         }
         
