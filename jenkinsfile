@@ -9,6 +9,7 @@ pipeline {
     environment {
     DOCKERHUB_CREDENTIALS = "dockerhub-credentials"
     DOCKER_IMAGE = "rayensebai/order_project"
+    KUBECONFIG = '/var/lib/jenkins/.kube/config'
     }
 
     stages {
@@ -71,11 +72,44 @@ pipeline {
             }
         }
         
+        stage('Kubernetes') {
+            steps {
+                sh '''
+                    kubectl apply -f mysql-deployment.yaml
+                    kubectl apply -f app-deployment.yaml
+                    '''
+                
+            }
+        }
+        
     }
     
     post {
         always {
             sh 'docker system prune -f'
         }
+        
+        success {
+            emailext(
+                subject: "✅ SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                <p>The Jenkins job <b>${env.JOB_NAME}</b> completed successfully!</p>
+                <p>Build URL: <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                """,
+                to: 'rayen.sebai07@gmail.com'
+            )
+        }
+        failure {
+            emailext(
+                subject: "❌ FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                <p>The Jenkins job <b>${env.JOB_NAME}</b> has failed.</p>
+                <p>Check console output: <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                """,
+                to: 'rayen.sebai07@gmail.com'
+            )
+        }
+
+        
     }
 }
