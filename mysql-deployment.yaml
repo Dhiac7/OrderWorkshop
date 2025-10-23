@@ -3,8 +3,6 @@ kind: Deployment
 metadata:
   name: mysql
   namespace: devops
-  labels:
-    app: mysql
 spec:
   replicas: 1
   selector:
@@ -18,22 +16,31 @@ spec:
       containers:
         - name: mysql
           image: mysql:8.0
-          ports:
-            - containerPort: 3306
+          imagePullPolicy: IfNotPresent
           env:
-            - name: MYSQL_ROOT_PASSWORD
-              value: "rootpassword"
             - name: MYSQL_DATABASE
               value: "javafxdb"
             - name: MYSQL_USER
               value: "javafxuser"
             - name: MYSQL_PASSWORD
               value: "javafxpass"
+            - name: MYSQL_ROOT_PASSWORD
+              value: "rootpass"   # dev only
+          ports:
+            - containerPort: 3306
+              name: mysql
+          readinessProbe:
+            tcpSocket: { port: 3306 }
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket: { port: 3306 }
+            initialDelaySeconds: 20
+            periodSeconds: 10
           volumeMounts:
-            - name: mysql-storage
+            - name: mysql-data
               mountPath: /var/lib/mysql
       volumes:
-        - name: mysql-storage
-          persistentVolumeClaim:
-            claimName: mysql-pvc
+        - name: mysql-data
+          emptyDir: {}   
 
