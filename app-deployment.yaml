@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: javafx-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: javafx
+  template:
+    metadata:
+      labels:
+        app: javafx
+    spec:
+      containers:
+      - name: javafx-app
+        image: mydockerhubuser/javafx-app:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_HOST
+          value: mysql
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: javafx-service
+spec:
+  selector:
+    app: javafx
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: NodePort   # or LoadBalancer if you have one
