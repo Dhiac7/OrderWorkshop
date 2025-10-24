@@ -7,5 +7,5 @@ spec:
     app: javafx
   ports:
   - port: 80
-    targetPort: 8080
+    targetPort: 8090
   type: NodePort   # or LoadBalancer if you have one
